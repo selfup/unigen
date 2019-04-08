@@ -1,4 +1,5 @@
 defmodule Unigen do
+  require IEx
   @moduledoc """
     Builds singular and clusters of universes
   """
@@ -10,13 +11,22 @@ defmodule Unigen do
   """
   @spec planes(number) :: List[Map]
   def planes(n) do
-    Enum.to_list 0..n |> Enum.map(fn x ->
-      Enum.to_list 0..n |> Enum.map(fn y ->
-        Enum.to_list 0..n |> Enum.map(fn z ->
-          Generator.generate(x, y, z)
-        end)
+    Enum.to_list(
+      0..n
+      |> Enum.map(fn x ->
+        Enum.to_list(
+          0..n
+          |> Enum.map(fn y ->
+            Enum.to_list(
+              0..n
+              |> Enum.map(fn z ->
+                Generator.generate(x, y, z)
+              end)
+            )
+          end)
+        )
       end)
-    end)
+    )
   end
 
   @doc ~S"""
@@ -27,8 +37,8 @@ defmodule Unigen do
   @spec build(number) :: Map
   def build(limit) do
     planes(limit)
-    |> List.flatten
-    |> Enum.map(&(Analyzer.set_charge(&1)))
+    |> List.flatten()
+    |> Enum.map(&Analyzer.set_charge(&1))
     |> Analyzer.field_charge(limit)
   end
 
@@ -40,7 +50,7 @@ defmodule Unigen do
   @spec generate(number) :: List[Map]
   def generate(limit) do
     %{charge: charge, universe: universe} = build(limit)
-    IO.puts "#{length(universe)} - #{charge}\n"
+    IO.puts("#{length(universe)} - #{charge}\n")
     universe
   end
 
@@ -67,10 +77,8 @@ defmodule Unigen do
   """
   @spec deploy_clusters(number, boolean) :: List[Map]
   def deploy_clusters(limit, incremental) do
-    Enum.to_list 1..limit
-    |> Enum.map(fn idx ->
-      Task.async(fn -> strategy(limit, idx, incremental) end)
-    end)
-    |> Enum.map(fn universe -> Task.await(universe, 200_000) end)
+    1..limit
+    |> Task.async_stream(fn idx -> strategy(limit, idx, incremental) end, timeout: :infinity)
+    |> Enum.map(fn {:ok, universe} -> universe end)
   end
 end
