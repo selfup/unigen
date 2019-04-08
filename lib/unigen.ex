@@ -1,5 +1,4 @@
 defmodule Unigen do
-  require IEx
   @moduledoc """
     Builds singular and clusters of universes
   """
@@ -78,7 +77,10 @@ defmodule Unigen do
   @spec deploy_clusters(number, boolean) :: List[Map]
   def deploy_clusters(limit, incremental) do
     1..limit
-    |> Task.async_stream(fn idx -> strategy(limit, idx, incremental) end, timeout: :infinity)
+    |> Task.async_stream(fn idx -> strategy(limit, idx, incremental) end,
+      timeout: :infinity,
+      max_concurrency: 16
+    )
     |> Enum.map(fn {:ok, universe} -> universe end)
   end
 end

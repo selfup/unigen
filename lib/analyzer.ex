@@ -20,12 +20,12 @@ defmodule Analyzer do
   @spec output_charge(Map, Map) :: %{charge: String, universe: Map}
   def output_charge(%{e: e, p: p, s: s}, universe) do
     cond do
-      (p == s && e == s) ->
+      p == s && e == s ->
         %{charge: "neutral", universe: universe}
-      
-      (p > s && e < p) ->
+
+      p > s && e < p ->
         %{charge: "ionic", universe: universe}
-      
+
       true ->
         %{charge: "anionic", universe: universe}
     end
